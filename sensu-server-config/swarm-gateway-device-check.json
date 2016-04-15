@@ -1,0 +1,11 @@
+{
+	"checks": {
+		"gateway-check-devices": {
+			"command": "create-checks-for-devices.js",
+			"subscribers": [
+				"swarm-gateway"
+			],
+			"interval": 180
+		}
+	}
+}
