@@ -18,7 +18,10 @@ var INTERVAL_SECONDS = 30;
 
 var CONFIG_FILENAME = '/etc/sensu/conf.d/swarm-gateway-devices.json';
 
-var RESTART_SENSU_CMD = 'systemctl restart sensu-client';
+// var RESTART_SENSU_CMD = 'systemctl restart sensu-client';
+var RESTART_SENSU_CMD = 'pkill -9 sensu-client';
+
+var TIMEOUT_MILLISECONDS = 7*60*1000;
 
 // Callback after we have found a MQTT broker.
 MQTTDiscover.on('mqttBroker', function (mqtt_client) {
@@ -33,8 +36,21 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
         var device_list = JSON.parse(message.toString());
 
         // Read in existing device list
-        var output = JSON.parse(fs.readFileSync(CONFIG_FILENAME));
+        var output = {checks: {}};
+        try {
+            output = JSON.parse(fs.readFileSync(CONFIG_FILENAME));
+        } catch (e) {}
 
+        // Remove stale devices that have failed.
+        for (var k in output.checks) {
+            var t = output.checks[k];
+            var n = Date.now();
+            if (n-t > TIMEOUT_MILLISECONDS) {
+                delete output.checks[k];
+            }
+        }
+
+        // All all current devices
         for (var i=0; i<device_list.length; i++) {
             var fields = device_list[i].split('/');
             if (fields.length == 3) {
@@ -42,7 +58,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
                 var addr = fields[2];
 
                 var name = type + '-' + addr;
-                name = name.replace(/[^A-Z0-9]/ig, '_');
+                name = name.replace(/[^A-Z0-9-]/ig, '_');
 
                 output.checks[name] = {
                     command: COMMAND_NAME + ' ' + name,

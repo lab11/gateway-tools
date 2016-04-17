@@ -1,7 +1,7 @@
 {
 	"checks": {
 		"gateway-check-devices": {
-			"command": "create-checks-for-devices.js",
+			"command": "/home/debian/gateway-tools/gateway/create-checks-for-devices.js",
 			"subscribers": [
 				"swarm-gateway"
 			],
