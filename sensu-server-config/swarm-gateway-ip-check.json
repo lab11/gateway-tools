@@ -1,0 +1,11 @@
+{
+	"checks": {
+		"gateway-check-ipaddress": {
+			"command": "/home/debian/gateway-tools/gateway/check-ip-address.js",
+			"subscribers": [
+				"swarm-gateway"
+			],
+			"interval": 300
+		}
+	}
+}

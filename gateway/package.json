@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/lab11/gateway-tools#readme",
   "dependencies": {
+    "getmac": "^1.0.7",
     "mqtt-discover": "^0.1.1"
   }
 }
