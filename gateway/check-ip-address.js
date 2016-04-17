@@ -8,8 +8,10 @@ function get_ip_addresses () {
 	var out = [];
 
 	for (var ifname in ifaces) {
-		if (ifname != lo) {
-			out.push(ifaces[ifname].address);
+		if (ifname != 'lo') {
+			for (var i=0; i<ifaces[ifname].length; i++) {
+				out.push(ifaces[ifname][i].address);
+			}
 		}
 	}
 	return out.join('|');
