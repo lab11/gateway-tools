@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/* sensu-configure-client
+ *
+ * Setup the /etc/sensu/conf.d/client.json file with a proper name
+ * for this device. Basically, we use the MAC address to give it a
+ * unique, static client identifier.
+ */
+
 var getmac = require('getmac');
 var exec   = require('child_process').exec;
 var fs     = require('fs');

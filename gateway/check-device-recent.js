@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 
+/* check-device-recent
+ *
+ * This check monitors if devices have been seen recently. It uses
+ * help from the create-checks-for-devices check as that script adds
+ * the last known timestamp for each device. This check simply checks
+ * that timestamp and implements a timeout. This work has to be split
+ * to fit into the sensu framework.
+ */
+
 var fs = require('fs');
 
 var TIMEOUT_MILLSECONDS = 5*60*1000;

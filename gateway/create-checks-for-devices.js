@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 
+/* create-checks-for-devices
+ *
+ * This script edits the sensu-client configs to add checks
+ * for all known devices. This lets us create "proxy" devices
+ * which we can monitor in sensu. This tool also saves the
+ * timestamp of when it saw the device, and removes old devices
+ * when they timeout.
+ */
+
 // Try to shutup some of the annoying avahi warnings.
 process.env['AVAHI_COMPAT_NOWARN'] = 1;
 
