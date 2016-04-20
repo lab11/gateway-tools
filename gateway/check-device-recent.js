@@ -11,28 +11,38 @@
 
 var fs = require('fs');
 
+// How long to wait before declaring a device gone. We need this timeout
+// here as well so that we can actually send an error to the sensu server.
 var TIMEOUT_MILLSECONDS = 5*60*1000;
+
+// Which file to read in to get the recent timestamp information for
+// each device.
 var CONFIG_FILENAME     = '/etc/sensu/conf.d/swarm-gateway-devices.json';
 
+// Which device we should check for is passed in as the first argument.
 var device_name = process.argv[2];
 
-var output = JSON.parse(fs.readFileSync(CONFIG_FILENAME));
+var config = JSON.parse(fs.readFileSync(CONFIG_FILENAME));
 
-if ('checks' in output) {
-    if (device_name in output.checks) {
-        if ('timestamp' in output.checks[device_name]) {
-            var timestamp = output.checks[device_name].timestamp;
-            var n = Date.now();
-            var diff = n - timestamp;
-            if (diff > TIMEOUT_MILLSECONDS) {
-                console.log('Device dropped from gateway-topics .');
-                process.exit(2);
-            } else {
-                process.exit(0);
-            }
-        }
+// Do some sanity checks for the device we are looking for.
+if (('checks' in config) &&
+    (device_name in config.checks) &&
+    ('timestamp' in config.checks[device_name])) {
+
+    // Check to see if this device has timed out.
+    var timestamp = config.checks[device_name].timestamp;
+    var n = Date.now();
+    var diff = n - timestamp;
+    if (diff > TIMEOUT_MILLSECONDS) {
+        console.log('Device dropped from gateway-topics .');
+        process.exit(2);
+    } else {
+        process.exit(0);
     }
+
 }
 
+// If we haven't exited by now, something is wrong, but in any case
+// the device isn't present.
 console.log('Error determining device.');
 process.exit(1);

@@ -20,16 +20,20 @@ var exec         = require('child_process').exec;
 // List of all topics the BLE gateway is supporting
 var TOPIC_TOPICS = 'gateway-topics';
 
+// What command each check should run to verify the device is still active.
 var COMMAND_NAME = '/home/debian/gateway-tools/gateway/check-device-recent.js';
-// var COMMAND_NAME = 'true';
 
+// How often the check for each device should run.
 var INTERVAL_SECONDS = 30;
 
+// Which file to read and update when creating the checks.
 var CONFIG_FILENAME = '/etc/sensu/conf.d/swarm-gateway-devices.json';
 
-// var RESTART_SENSU_CMD = 'systemctl restart sensu-client';
+// How to restart the sensu-client. We just kill it and let systemd bring
+// it back.
 var RESTART_SENSU_CMD = 'pkill -9 sensu-client';
 
+// How long to wait to see a device before determining it's gone.
 var TIMEOUT_MILLISECONDS = 7*60*1000;
 
 // Callback after we have found a MQTT broker.
@@ -59,7 +63,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
             }
         }
 
-        // All all current devices
+        // All current devices
         for (var i=0; i<device_list.length; i++) {
             var fields = device_list[i].split('/');
             if (fields.length == 3) {
@@ -79,10 +83,11 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
             }
         }
 
-        // console.log(JSON.stringify(output));
-
+        // Write the check file back to disk to configure sensu client
         fs.writeFileSync(CONFIG_FILENAME, JSON.stringify(output));
 
+        // Restart the sensu client so that it reads in the new
+        // configuration.
         exec(RESTART_SENSU_CMD, function (err, stdout, stderr) {
             process.exit(0);
         });
