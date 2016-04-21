@@ -34,7 +34,7 @@ if (('checks' in config) &&
     var n = Date.now();
     var diff = n - timestamp;
     if (diff > TIMEOUT_MILLSECONDS) {
-        console.log('Device dropped from gateway-topics .');
+        console.log('Device dropped from gateway-topics ' + (diff/1000) + ' seconds ago.');
         process.exit(2);
     } else {
         process.exit(0);
