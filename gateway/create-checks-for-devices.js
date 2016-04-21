@@ -24,7 +24,7 @@ var TOPIC_TOPICS = 'gateway-topics';
 var COMMAND_NAME = '/home/debian/gateway-tools/gateway/check-device-recent.js';
 
 // How often the check for each device should run.
-var INTERVAL_SECONDS = 30;
+var INTERVAL_SECONDS = 120;
 
 // Which file to read and update when creating the checks.
 var CONFIG_FILENAME = '/etc/sensu/conf.d/swarm-gateway-devices.json';
