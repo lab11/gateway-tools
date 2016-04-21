@@ -56,7 +56,7 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 
         // Remove stale devices that have failed.
         for (var k in output.checks) {
-            var t = output.checks[k];
+            var t = output.checks[k].timestamp;
             var n = Date.now();
             if (n-t > TIMEOUT_MILLISECONDS) {
                 delete output.checks[k];
