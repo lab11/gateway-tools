@@ -13,7 +13,7 @@ var fs = require('fs');
 
 // How long to wait before declaring a device gone. We need this timeout
 // here as well so that we can actually send an error to the sensu server.
-var TIMEOUT_MILLSECONDS = 5*60*1000;
+var TIMEOUT_MILLSECONDS = 10*60*1000;
 
 // Which file to read in to get the recent timestamp information for
 // each device.
