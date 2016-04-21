@@ -34,7 +34,7 @@ var CONFIG_FILENAME = '/etc/sensu/conf.d/swarm-gateway-devices.json';
 var RESTART_SENSU_CMD = 'pkill -9 sensu-client';
 
 // How long to wait to see a device before determining it's gone.
-var TIMEOUT_MILLISECONDS = 7*60*1000;
+var TIMEOUT_MILLISECONDS = 15*60*1000;
 
 // Callback after we have found a MQTT broker.
 MQTTDiscover.on('mqttBroker', function (mqtt_client) {
