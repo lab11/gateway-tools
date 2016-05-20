@@ -18,7 +18,7 @@ var output = JSON.parse(fs.readFileSync(CONFIG_FILENAME));
 
 if ('client' in output) {
 	getmac.getMac(function (err, addr) {
-		var macaddr = adddr.replace(/[^A-Z0-9-]/ig, '');
+		var macaddr = addr.replace(/[^A-Z0-9-]/ig, '');
 		var name = 'swarm-gateway-' + macaddr;
 
 		output['client']['name'] = name;
