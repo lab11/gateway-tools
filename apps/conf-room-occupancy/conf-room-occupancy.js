@@ -162,8 +162,8 @@ MQTTDiscover.on('mqttBroker', function (mqtt_client) {
 				if (err) {
 					console.log(err);
 				}
-				console.log('Posted: ');
-				console.log(post);
+				// console.log('Posted: ');
+				// console.log(post);
 			});
 
 		}
