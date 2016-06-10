@@ -99,9 +99,9 @@ function post_to_gatd (message) {
 
     // buffer several advertisements and post the entire list to GATD
     post_buffer.push(message);
-    console.log("Post buffer len: " + post_buffer.length + "\t Time since post: " + (curr_time-last_post_time));
+    //console.log("Post buffer len: " + post_buffer.length + "\t Time since post: " + (curr_time-last_post_time));
     if (post_buffer.length > POST_BUFFER_LEN || (curr_time-last_post_time) > POST_TIMEOUT) {
-        console.log("Posting to GATD");
+        //console.log("Posting to GATD");
         last_post_time = curr_time;
         var buf = post_buffer;
         post_buffer = [];
@@ -114,13 +114,12 @@ function post_to_gatd (message) {
         };
         request(req, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                console.log("Post to GATD successful");
+                //console.log("Post to GATD successful");
 
                 // post successful, reset watchdog
                 gatd_watchdog.reset();
             } else {
                 console.log(error);
-                process.exit(1);
             }
         });
     }
