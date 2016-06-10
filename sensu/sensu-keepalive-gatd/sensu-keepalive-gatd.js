@@ -3,11 +3,12 @@
 "use strict";
 
 // Libraries
-var fs       = require('fs');
-var ini      = require('ini');
-var amqp     = require('amqp');
-var request  = require('request');
-var watchout = require('watchout');
+var fs           = require('fs');
+var ini          = require('ini');
+var amqp         = require('amqp');
+var request      = require('request');
+var watchout     = require('watchout');
+var SensuProcess = require('sensu-process');
 
 // get amqp config file
 try {
@@ -40,6 +41,8 @@ try {
     process.exit(1);
 }
 
+SensuProcess.init('./sensu.conf', 'sensu-keepalive-gatd');
+SensuProcess.begin();
 
 // Configuration
 var POST_BUFFER_LEN = 100; // group N packets into a single post to GATD
@@ -118,6 +121,9 @@ function post_to_gatd (message) {
 
                 // post successful, reset watchdog
                 gatd_watchdog.reset();
+
+                // send keepalive to sensu
+                SensuProcess.keepalive();
             } else {
                 console.log(error);
             }
