@@ -1,0 +1,15 @@
+{
+  "name": "power_to_alert",
+  "version": "1.0.0",
+  "description": "",
+  "main": "power_to_twitter.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^1.11.0",
+    "twitter": "^1.3.0"
+  }
+}
