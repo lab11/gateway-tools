@@ -1,0 +1,14 @@
+{
+  "name": "pir-occupancy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "pir-occupancy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Brad Campbell",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^1.11.0"
+  }
+}
