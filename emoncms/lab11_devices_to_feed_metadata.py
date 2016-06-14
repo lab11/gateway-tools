@@ -27,9 +27,15 @@ def sanitize (s):
 
 
 parser = argparse.ArgumentParser(description=desc, epilog=example, formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument('-f', '--file',
+parser.add_argument('--wiki',
                     required=True,
-                    help='.hmtl file to parse')
+                    help='Wiki path. ex: http://energy.eecs.umich.edu/wiki')
+parser.add_argument('--wiki-username',
+                    required=True,
+                    help='Wiki username')
+parser.add_argument('--wiki-password',
+                    required=True,
+                    help='Wiki password')
 parser.add_argument('-u', '--url',
                     required=True,
                     help='Base URL for emaoncms. Ex: https://emoncms.lab11.eecs.umich.edu')
@@ -45,49 +51,57 @@ args = parser.parse_args()
 
 devices = {}
 
+# Get the wiki page
+url = '{}/doku.php?id=priv:equipment'.format(args.wiki)
+data = {
+	'do': 'login',
+	'u': args.wiki_username,
+	'p': args.wiki_password,
+	'r': '1'
+}
+devices_html_req = requests.post(url, data=data)
+
 # Read in all known devices from wiki
-with open(args.file) as f:
-	html = f.read()
-	soup = BeautifulSoup(html, 'html.parser')
+soup = BeautifulSoup(devices_html_req.text, 'html.parser')
 
-	# Get all tables in the lab equipment page
-	tables = soup.find_all('table')
+# Get all tables in the lab equipment page
+tables = soup.find_all('table')
 
-	# Now find the ones with deployed devices
-	for table in tables:
-		cols = table.thead.find_all('th')
-		if len(cols) == 8 and\
-		   cols[0].string.strip() == '#' and\
-		   cols[1].string.strip() == 'Device Type' and\
-		   cols[2].string.strip() == 'Device Hostname' and\
-		   cols[3].string.strip() == 'IP Address' and\
-		   cols[4].string.strip() == 'Device ID' and\
-		   cols[5].string.strip() == 'Location' and\
-		   cols[6].string.strip() == 'Description' and\
-		   cols[7].string.strip() == 'Notes':
+# Now find the ones with deployed devices
+for table in tables:
+	cols = table.thead.find_all('th')
+	if len(cols) == 8 and\
+	   cols[0].string.strip() == '#' and\
+	   cols[1].string.strip() == 'Device Type' and\
+	   cols[2].string.strip() == 'Device Hostname' and\
+	   cols[3].string.strip() == 'IP Address' and\
+	   cols[4].string.strip() == 'Device ID' and\
+	   cols[5].string.strip() == 'Location' and\
+	   cols[6].string.strip() == 'Description' and\
+	   cols[7].string.strip() == 'Notes':
 
-			rows = table.tbody.find_all('tr')
-			for row in rows:
-				tds = row.find_all('td')
-				if len(tds) == 8:
-					deviceid = tds[4].string.strip().lower().replace(':', '')
-					devicetype = sanitize(tds[1].string.strip())
-					location = sanitize(tds[5].string.strip())
-					description = sanitize(tds[6].string.strip())
-					notes = sanitize((tds[7].string or '').strip())
+		rows = table.find_all('tr')
+		for row in rows:
+			tds = row.find_all('td')
+			if len(tds) == 8:
+				deviceid = tds[4].string.strip().lower().replace(':', '')
+				devicetype = sanitize(tds[1].string.strip())
+				location = sanitize(tds[5].string.strip())
+				description = sanitize(tds[6].string.strip())
+				notes = sanitize((tds[7].string or '').strip())
 
-					if deviceid not in devices:
-						devices[deviceid] = {}
-					else:
-						print('DUPLICATE ID: {}'.format(deviceid))
-						print('EXITING! You must fix this.')
-						sys.exit(1)
+				if deviceid not in devices:
+					devices[deviceid] = {}
+				else:
+					print('DUPLICATE ID: {}'.format(deviceid))
+					print('EXITING! You must fix this.')
+					sys.exit(1)
 
 
-					devices[deviceid]['location'] = location
-					devices[deviceid]['description'] = description
-					devices[deviceid]['notes'] = notes
-					devices[deviceid]['devicetype'] = devicetype
+				devices[deviceid]['location'] = location
+				devices[deviceid]['description'] = description
+				devices[deviceid]['notes'] = notes
+				devices[deviceid]['devicetype'] = devicetype
 
 
 
