@@ -30,8 +30,7 @@ function set_empty () {
 	console.log('Setting room (' + conf.room + ') as empty.');
 }
 
-// var client = mqtt.connect('mqtt://localhost');
-var client = mqtt.connect('mqtt://67.194.11.78');
+var client = mqtt.connect('mqtt://localhost');
 
 client.on('connect', function () {
 	console.log('connected')
