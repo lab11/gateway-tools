@@ -26,8 +26,9 @@ module Sensu::Extension
         if event['check']['name'] == "keepalive"
 
           output = event['check']['output']
-          device_class = event['client']['name'].split('-', 2)[0].gsub(/\W/, '_')
-          device_id = event['client']['name'].split('-', 2)[1]
+          # make sure device_class and id work correctly with strings like "swarm-gateway-c098e5c00001"
+          device_class = event['client']['name'].reverse.split('-', 2)[-1].reverse.gsub(/[^\w_-]/, '_')
+          device_id = event['client']['name'].reverse.split('-', 2)[0].reverse.gsub(/[^\w_-]/, '_')
           gateway_id = event['client']['address']
           timestamp = event['client']['timestamp']
 
