@@ -7,6 +7,7 @@ var fs           = require('fs');
 
 var MQTTDiscover = require('mqtt-discover');
 var request      = require('request');
+var getmac       = require('getmac');
 
 
 // {
@@ -32,144 +33,156 @@ var entered_unsure_timestamp = 0;
 var power_states = {};
 var motion_states = {'door': {}, 'room': {}};
 
+getmac.getMac(function (error, macaddr) {
+    console.log('Using MAC address: ' + macaddr);
+
+    MQTTDiscover.on('mqttBroker', function (mqtt_client) {
+	console.log('Connected to MQTT ' + mqtt_client.options.href);
+
+	// Subscribe to each of the relevant sensors
+	for (var deviceid in conf.sensors) {
+	    var sensor_type = conf.sensors[deviceid].type;
+	    mqtt_client.subscribe('device/' + sensor_type + '/' + deviceid);
+	}
+
+	// Called when we get a packet from MQTT
+	mqtt_client.on('message', function (topic, message) {
+	    var now = Date.now();
+
+	    // message is Buffer
+	    var adv_obj = JSON.parse(message.toString());
+
+	    // Get where this came from
+	    var deviceid = topic.split('/')[2];
+	    // var deviceid = adv_obj._meta.device_id;
 
 
-MQTTDiscover.on('mqttBroker', function (mqtt_client) {
-    console.log('Connected to MQTT ' + mqtt_client.options.href);
+	    // Look up what kind of sensor this is and what we should do with it.
+	    var sensor_type = conf.sensors[deviceid].type;
 
-    // Subscribe to each of the relevant sensors
-    for (var deviceid in conf.sensors) {
-    	var sensor_type = conf.sensors[deviceid].type;
-    	mqtt_client.subscribe('device/' + sensor_type + '/' + deviceid);
-    }
+	    if (sensor_type == 'PowerBlade') {
+		var threshold = conf.sensors[deviceid].threshold;
+		power_states[deviceid] = [(adv_obj.power > threshold), now];
 
-    // Called when we get a packet from MQTT
-    mqtt_client.on('message', function (topic, message) {
-    	var now = Date.now();
+	    } else if (sensor_type == 'Blink') {
+		var location = conf.sensors[deviceid].location;
+		motion_states[location][deviceid] = [adv_obj.motion_last_minute, now];
+	    }
 
-        // message is Buffer
-        var adv_obj = JSON.parse(message.toString());
-
-        // Get where this came from
-        var deviceid = topic.split('/')[2];
-        // var deviceid = adv_obj._meta.device_id;
-
-
-        // Look up what kind of sensor this is and what we should do with it.
-        var sensor_type = conf.sensors[deviceid].type;
-
-        if (sensor_type == 'PowerBlade') {
-        	var threshold = conf.sensors[deviceid].threshold;
-        	power_states[deviceid] = [(adv_obj.power > threshold), now];
-
-        } else if (sensor_type == 'Blink') {
-        	var location = conf.sensors[deviceid].location;
-        	motion_states[location][deviceid] = [adv_obj.motion_last_minute, now];
-        }
-
-        // Condense most sensors to single booleans
-        function condense (measurements) {
-        	var out = false;
-        	var t = 0;
-        	for (var sensorid in measurements) {
-        		// Check that measurement isn't super old (in the last minute)
-        		if (now - measurements[sensorid][1] < 60*1000) {
-        			if (measurements[sensorid][0]) {
-        				out = true;
-        				// Get the lastest timestamp that we saw this measurement
-        				if (measurements[sensorid][1] > t) {
-        					t = measurements[sensorid][1];
-        				}
-        			}
-        		}
-        	}
-        	return [out, t];
-        }
-        var condensed = condense(power_states);
-        var power = condensed[0];
-        var power_time = condensed[1];
-        var condensed = condense(motion_states['room']);
-        var room_motion = condensed[0];
-        var room_motion_time = condensed[1];
-        var condensed = condense(motion_states['door']);
-        var door_motion = condensed[0];
-        var door_motion_time = condensed[1];
-
-        // Save previous state so we know if it changed.
-        var previous_state = state;
-
-		// State machine
-		if (state == 'UNOCCUPIED') {
-			// On any detection, we move to occupied
-			if (power || room_motion || door_motion) {
-				state = 'OCCUPIED';
+	    // Condense most sensors to single booleans
+	    function condense (measurements) {
+		var out = false;
+		var t = 0;
+		for (var sensorid in measurements) {
+		    // Check that measurement isn't super old (in the last minute)
+		    if (now - measurements[sensorid][1] < 60*1000) {
+			if (measurements[sensorid][0]) {
+			    out = true;
+			    // Get the lastest timestamp that we saw this measurement
+			    if (measurements[sensorid][1] > t) {
+				t = measurements[sensorid][1];
+			    }
 			}
+		    }
+		}
+		return [out, t];
+	    }
+	    var condensed = condense(power_states);
+	    var power = condensed[0];
+	    var power_time = condensed[1];
+	    var condensed = condense(motion_states['room']);
+	    var room_motion = condensed[0];
+	    var room_motion_time = condensed[1];
+	    var condensed = condense(motion_states['door']);
+	    var door_motion = condensed[0];
+	    var door_motion_time = condensed[1];
 
-		} else if (state == 'OCCUPIED') {
-			// We stay here unless we see door. Then we are not sure if
-			// everyone just left.
-			if (door_motion) {
-				state = 'UNSURE';
-				entered_unsure_timestamp = now;
-			}
+	    // Save previous state so we know if it changed.
+	    var previous_state = state;
 
-		} else if (state == 'UNSURE') {
-			// If door motion is still here, we still don't know much.
-			// We stay in this state because someone must be at least
-			// near the room.
-			if (door_motion) {
-				// stay
-				entered_unsure_timestamp = now;
-			} else if (!power && !room_motion) {
-				// Nothing is happening. This looks like the room
-				// is empty.
-				state = 'UNOCCUPIED';
-			} else {
-				// This is where things get tricky. We need to decide whether
-				// the door was because the last person left, or if someone
-				// entered.
-				// As a heuristic, we need to see something happen in the
-				// room 15 seconds after anything happened near the door
-				// in order to say there are people in the room. This handles
-				// any sensor weirdness and dropped packets.
-				var threshold_timestamp = entered_unsure_timestamp + (15*1000);
-				if ((power && projector_time >= threshold_timestamp) ||
-				    (room_motion && room_motion_time >= threshold_timestamp)) {
-					// We saw some indication after the door that the room is still occupied.
-					state = 'OCCUPIED';
-				}
-			}
+	    // State machine
+	    if (state == 'UNOCCUPIED') {
+		// On any detection, we move to occupied
+		if (power || room_motion || door_motion) {
+		    state = 'OCCUPIED';
 		}
 
-		// Rate limit updates
-		if (previous_state != state || (now - last_post_timestamp) > 10*1000) {
-
-			// Update last post time
-			last_post_timestamp = now;
-
-			var post = {
-				room: conf.room,
-				state: state
-			};
-
-			var options = {
-				uri: conf.posturl,
-				method: 'POST',
-				json: post
-			};
-
-			request(options, function (err, response, body) {
-				if (err) {
-					console.log(err);
-				}
-				// console.log('Posted: ');
-				// console.log(post);
-			});
-
+	    } else if (state == 'OCCUPIED') {
+		// We stay here unless we see door. Then we are not sure if
+		// everyone just left.
+		if (door_motion) {
+		    state = 'UNSURE';
+		    entered_unsure_timestamp = now;
 		}
+
+	    } else if (state == 'UNSURE') {
+		// If door motion is still here, we still don't know much.
+		// We stay in this state because someone must be at least
+		// near the room.
+		if (door_motion) {
+		    // stay
+		    entered_unsure_timestamp = now;
+		} else if (!power && !room_motion) {
+		    // Nothing is happening. This looks like the room
+		    // is empty.
+		    state = 'UNOCCUPIED';
+		} else {
+		    // This is where things get tricky. We need to decide whether
+		    // the door was because the last person left, or if someone
+		    // entered.
+		    // As a heuristic, we need to see something happen in the
+		    // room 15 seconds after anything happened near the door
+		    // in order to say there are people in the room. This handles
+		    // any sensor weirdness and dropped packets.
+		    var threshold_timestamp = entered_unsure_timestamp + (15*1000);
+		    if ((power && projector_time >= threshold_timestamp) ||
+			    (room_motion && room_motion_time >= threshold_timestamp)) {
+			// We saw some indication after the door that the room is still occupied.
+			state = 'OCCUPIED';
+		    }
+		}
+	    }
+
+	    // Rate limit updates
+	    if (previous_state != state || (now - last_post_timestamp) > 10*1000) {
+
+		// Update last post time
+		last_post_timestamp = now;
+
+		var post = {
+		    room: conf.room,
+		    state: state
+		};
+
+		var options = {
+		    uri: conf.posturl,
+		    method: 'POST',
+		    json: post
+		};
+
+		request(options, function (err, response, body) {
+		    if (err) {
+			console.log(err);
+		    }
+		    // console.log('Posted: ');
+		    // console.log(post);
+		});
+
+		// post to influx too
+		var out = {
+		    room: conf.room,
+		    gateway_id: macaddr,
+		    occupied: (state != 'UNOCCUPIED'),
+		    confidence: (state == 'UNSURE' ? 0.8 : 1.0),
+		    time: new Date().toISOString()
+		};
+		mqtt_client.publish('occupancy/' + conf.room, JSON.stringify(out), {retain: true});
+
+	    }
+
+	});
 
     });
-
 });
 
 // Find MQTT server

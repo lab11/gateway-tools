@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "getmac": "^1.2.1",
     "mqtt-discover": "^0.1.1",
     "request": "^2.72.0"
   }

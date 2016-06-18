@@ -9,6 +9,7 @@
   "author": "Brad Campbell",
   "license": "ISC",
   "dependencies": {
+    "getmac": "^1.2.1",
     "mqtt": "^1.11.0"
   }
 }
