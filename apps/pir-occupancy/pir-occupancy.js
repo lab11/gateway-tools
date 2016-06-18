@@ -15,23 +15,25 @@ var OCCUPANCY_TIMEOUT = 2 * 60 * 1000;
 var _occupied = false;
 var _occupancy_timeout = undefined;
 
-// Mark the room as empty
-function set_empty () {
-    _occupied = false;
-
-    // Publish a message to this effect
-    var out = {
-        room: conf.room,
-        occupied: false,
-        time: new Date().toISOString()
-    };
-    client.publish('occupancy/' + conf.room, JSON.stringify(out), {retain: true});
-
-    console.log('Setting room (' + conf.room + ') as empty.');
-}
-
 getmac.getMac(function (error, macaddr) {
     console.log('Using MAC address: ' + macaddr);
+
+    // Mark the room as empty
+    function set_empty () {
+        _occupied = false;
+
+        // Publish a message to this effect
+        var out = {
+            room: conf.room,
+            gateway_id: macaddr,
+            occupied: false,
+            confidence: 1.0,
+            time: new Date().toISOString()
+        };
+        client.publish('occupancy/' + conf.room, JSON.stringify(out), {retain: true});
+
+        console.log('Setting room (' + conf.room + ') as empty.');
+    }
 
     var client = mqtt.connect('mqtt://localhost');
 
