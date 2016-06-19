@@ -1,0 +1,8 @@
+stream
+	// Select the occupancy measurement for all rooms
+	|from()
+		.measurement('occupancy')
+	// device id in this case is the room number
+	|groupBy('device_id')
+	// make it available via HTTP GET (/kapacitor/v1/tasks/occupancy/all-rooms)
+	|httpOut('all-rooms')
