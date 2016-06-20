@@ -1,0 +1,14 @@
+{
+  "name": "occupancy-to-wattsup",
+  "version": "1.0.0",
+  "description": "",
+  "main": "occupancy-to-wattsup.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^1.11.2"
+  }
+}
