@@ -3,11 +3,11 @@
 // Try to shutup some of the annoying avahi warnings.
 process.env['AVAHI_COMPAT_NOWARN'] = 1;
 
-var fs           = require('fs');
+var fs      = require('fs');
 
-var MQTTDiscover = require('mqtt-discover');
-var request      = require('request');
-var getmac       = require('getmac');
+var mqtt    = require('mqtt');
+var request = require('request');
+var getmac  = require('getmac');
 
 
 // {
@@ -36,7 +36,9 @@ var motion_states = {'door': {}, 'room': {}};
 getmac.getMac(function (error, macaddr) {
     console.log('Using MAC address: ' + macaddr);
 
-    MQTTDiscover.on('mqttBroker', function (mqtt_client) {
+    var mqtt_client = mqtt.connect('mqtt://localhost');
+
+    mqtt_client.on('connect', function () {
         console.log('Connected to MQTT ' + mqtt_client.options.href);
 
         // Subscribe to each of the relevant sensors
@@ -185,5 +187,3 @@ getmac.getMac(function (error, macaddr) {
     });
 });
 
-// Find MQTT server
-MQTTDiscover.start();
