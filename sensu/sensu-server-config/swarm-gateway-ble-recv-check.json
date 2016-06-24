@@ -1,0 +1,11 @@
+{
+	"checks": {
+		"gateway-check-ble-recv": {
+			"command": "FOO=$(hciconfig | awk '/RX bytes:/{print $2}' | awk -F ':' '{print $2}'); sleep 1s; BAR=$(hciconfig | awk '/RX bytes:/{print $2}' | awk -F ':' '{print $2}'); echo Started with $FOO; echo Ended with $BAR; if [ $(( $BAR - $FOO )) -eq 0 ]; then RET=1; fi; exit $RET",
+			"subscribers": [
+				"swarm-gateway"
+			],
+			"interval": 60
+		}
+	}
+}
