@@ -1,7 +1,7 @@
 {
 	"checks": {
 		"gateway-check-disk": {
-			"command": "PERCENT=$(df -h | awk '/\/$/{print $5}' | cut -d '%' -f 1); echo Root disk at $PERCENT%; if [ $PERCENT -gt 98 ]; then exit 2; elif [ $PERCENT -gt 94 ]; then exit 1; fi;",
+			"command": "PERCENT=$(df -h | grep '/$' | awk '{print $5}' | cut -d '%' -f 1); echo Root disk at $PERCENT%; if [ $PERCENT -gt 98 ]; then exit 2; elif [ $PERCENT -gt 94 ]; then exit 1; fi;",
 			"subscribers": [
 				"swarm-gateway"
 			],
