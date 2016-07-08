@@ -1,0 +1,15 @@
+{
+  "name": "boolean-to-edimax",
+  "version": "1.0.0",
+  "description": "Read a truthy value from MQTT and control Edimax switches with it",
+  "main": "boolean-to-edimax.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pat Pannuto",
+  "license": "ISC",
+  "dependencies": {
+    "edimax-smartplug": "0.0.14",
+    "mqtt": "^1.12.0"
+  }
+}
