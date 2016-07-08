@@ -95,6 +95,7 @@ soup = BeautifulSoup(devices_html_req.text, 'html.parser')
 tables = soup.find_all('table')
 
 # Now find the ones with deployed devices
+num_wiki_devices = 0
 for table in tables:
 	cols = table.thead.find_all('th')
 	if len(cols) == 8 and\
@@ -150,7 +151,12 @@ for table in tables:
 
 				devices[devicename] = out
 
+				num_wiki_devices += 1
 
+print('Found {} devices on the wiki'.format(num_wiki_devices))
+if num_wiki_devices == 0:
+	print('No devices found on wiki. Likely wrong password?')
+	sys.exit(1)
 
 # Get list from sensu so we know which devices to actually publish
 
