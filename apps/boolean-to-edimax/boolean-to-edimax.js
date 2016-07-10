@@ -34,7 +34,11 @@ function setEdimaxesPowerState (onoff, edimaxes=null) {
 
 
 var warningTimeout = null;
-function warnLightsOff (count=0) {
+function warnLightsOff (count) {
+	if (typeof count == 'undefined') {
+		count = 0;
+	}
+
 	// Blink a light three times and then wait 30s before actually turning off
 	// the lights. Calling clearTimeout(warningTimeout) will abort the shutoff.
 	// The warning light will remain off during the 30s warning interval, callers
