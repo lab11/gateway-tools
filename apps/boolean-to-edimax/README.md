@@ -7,9 +7,9 @@ Read a truthy value from an MQTT stream and use that to control Edimax power plu
 configuration.json
 ------------------
 
-```
+```javascript
 {
-	"mqttBroker": "mqtt://custom.com" /* default mqtt://localhost",
+	"mqttBroker": "mqtt://custom.com", /* default mqtt://localhost" */
 	"controlTopic": "occupancy/4908",
 	"controlKey": "occupied",
 	"controlInvert": true, /* default false */
