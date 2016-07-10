@@ -22,8 +22,8 @@ var client = mqtt.connect(conf.mqttBroker);
 
 
 
-function setEdimaxesPowerState (onoff, edimaxes=null) {
-	if ( edimaxes == null ) {
+function setEdimaxesPowerState (onoff, edimaxes) {
+	if ( typeof edimaxes == 'undefined' ) {
 		edimaxes = conf.edimaxes;
 	}
 
