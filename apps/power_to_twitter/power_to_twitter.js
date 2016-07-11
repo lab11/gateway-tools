@@ -41,6 +41,11 @@ function send_alert () {
 			"And really? How would you like working for " + hours + " hours",
 			"But why such a big print?"
 		];
+	} else if (hours == 1) {
+		time_messages = [
+			"And it only took an hour",
+			"I do good work in an hour"
+		];
 	} else {
 		time_messages = [
 			"And it only took " + hours + " hours.",
