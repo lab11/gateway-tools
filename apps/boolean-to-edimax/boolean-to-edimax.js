@@ -15,6 +15,9 @@ if ( ! ('mqttBroker' in conf) ) {
 if ( ! ('controlInvert' in conf) ) {
 	conf.controlInvert = false;
 }
+if ( ! ('coalesceEvents' in conf) ) {
+	conf.coalesceEvents = true;
+}
 
 
 console.log("connecting to " + conf.mqttBroker);
@@ -67,6 +70,8 @@ client.on('connect', function () {
 
 	client.subscribe(conf.controlTopic);
 
+	var lastMessage = undefined;
+
 	client.on('message', function (topic, message) {
 		var msg_obj = JSON.parse(message.toString());
 
@@ -80,6 +85,13 @@ client.on('connect', function () {
 
 		if ( conf.controlInvert ) {
 			onoff = !onoff;
+		}
+
+		if ( conf.coalesceEvents ) {
+			if ( lastMessage == onoff ) {
+				return;
+			}
+			lastMessage = onoff;
 		}
 
 		if (onoff) {
