@@ -18,7 +18,7 @@ Parse our wiki .html file and update sensu
 
 
 def sanitize (s):
-	s = re.sub(r'([^\s\w]|_)+', '', s)
+	s = re.sub(r'([^\s\w-]|_)+', '', s)
 	s = s.replace(' ', '-')
 	return s
 
@@ -130,7 +130,7 @@ for table in tables:
 
 
 				meta_info = '{}:{}:{}'.format(location, description, notes)
-				print(meta_info)
+				# print(meta_info)
 
 				out = {
 					"client": devicename,
