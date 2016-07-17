@@ -173,7 +173,7 @@ clients = requests.get(url, headers={'Authorization':'Bearer {}'.format(token)})
 for client in clients:
 	name = client['name']
 	if name in devices:
-		print(devices[name])
+		print('Setting {: <35} to {}'.format(devices[name]['check']['source'], devices[name]['check']['output']))
 
 		if not args.dry_run:
 			amqp_chan.basic_publish(exchange='results', body=json.dumps(devices[name]), routing_key='')
