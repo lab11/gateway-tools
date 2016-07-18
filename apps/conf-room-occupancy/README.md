@@ -23,6 +23,16 @@ Configuration
 The app needs a file named `configuration.json` that looks like:
 
 ```
+{
+  "room": "<room name>",
+  "posturl": "<url to post to>",
+  "sensors": {
+      "<sensor id>": {"type": "Blink", "location": "room"},
+      "<sensor id>": {"type": "Blink", "location": "door"},
+      "<sensor id>": {"type": "PowerBlade", "threshold": 15},
+      "<sensor id>": {"type": "PowerBlade", "threshold": 100}
+  }
+}
 ```
 
 Output
@@ -40,4 +50,4 @@ The app outputs
 }
 ```
 
-on
+on the MQTT topic `occupancy/<room name>`. It also POSTs to a URL.
