@@ -4,6 +4,7 @@ import sys
 import os
 import bisect
 import math
+from datetime import datetime
 
 def binsearch(a, x):
     x_day = x.split("T")[0]
@@ -73,14 +74,19 @@ with open('influxdb.conf', 'r') as f:
     config_str = '[global]\n' + f.read()
 config.read_string(config_str)
 
+devices = ['c098e59000b4', 'c098e59000b3']
+errct = []
 
-print("Connecting to influxDB:\n\thost=" + config['global']['host'] +
-        "\n\tport=" + config['global']['port'] + 
-        "\n\tusername=" + config['global']['username'] +
-        "\n\tpassword=" + config['global']['password'] +
-        "\n\tdatabase=" + config['global']['database'] +
-        "\n\tssl=" + str(config['global']['protocol']=='https') +
-        "\n\tverify_ssl=" + str(config['global']['protocol']=='https'))
+print("Starting process at " + str(datetime.now()))
+print("Connecting to influxDB")
+print()
+# print("Connecting to influxDB:\n\thost=" + config['global']['host'] +
+#         "\n\tport=" + config['global']['port'] + 
+#         "\n\tusername=" + config['global']['username'] +
+#         "\n\tpassword=" + config['global']['password'] +
+#         "\n\tdatabase=" + config['global']['database'] +
+#         "\n\tssl=" + str(config['global']['protocol']=='https') +
+#         "\n\tverify_ssl=" + str(config['global']['protocol']=='https'))
 print
 client = InfluxDBClient(host=config['global']['host'],
         port=config['global']['port'],
@@ -94,96 +100,113 @@ client = InfluxDBClient(host=config['global']['host'],
 # adapted from granfana.lab11.eecs.umich.edu, '15.4 Scanning' dashboard, '15.4 Channel RSSI 200ms Averages' plot, query A
 #result = client.query("select value from channel_11 where receiver='scanner154-uart' and device_id='scanner_1' and time>'2016-08-08T05:07:37.59Z' and time<'2016-08-08T05:08:00.00Z'")
 #result = client.query("select * from motion_last_minute where device_id='c098e59000b4' or device_id='c098e59000b3' or device_id='c098e59000b7' or device_id='c098e59000b0' or device_id='c098e59000b8' or device_id='c098e59000af' or device_id='c098e59000b2' or device_id='c098e59000b5'")
-result_min = client.query("select * from motion_last_minute where device_id='c098e59000b4' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit " +  str(100000000))
-result_adv = client.query("select * from motion_since_last_adv where device_id='c098e59000b4' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit 100000000")
-result_now = client.query("select * from current_motion where device_id='c098e59000b4' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit 100000000")
-#print()
-#print(result_min)
-#print(result.get_points)
-#print(list(result_min.get_points('motion_last_minute')))
-#print(list(result_adv.get_points('motion_since_last_adv'))[0])
-#print(list(result_now.get_points('current_motion'))[0])
-#print()
+
+rowlimit = 1000
 
 fout = open('blink_b4.csv', 'w')
 
-list_min = list(result_min.get_points('motion_last_minute'))
-list_adv = list(result_adv.get_points('motion_since_last_adv'))
-list_now = list(result_now.get_points('current_motion'))
+for devItem in devices:
 
-# print(list_min)
-# print(list_adv)
-# print(list_now)
-# exit()
+    result_min = client.query("select * from motion_last_minute where device_id=\'" + devItem + "\' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit " + str(rowlimit))
+    result_adv = client.query("select * from motion_since_last_adv where device_id=\'" + devItem + "\' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit " + str(rowlimit))
+    result_now = client.query("select * from current_motion where device_id=\'" + devItem + "\' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit " + str(rowlimit))
+    #print()
+    #print(result_min)
+    #print(result.get_points)
+    #print(list(result_min.get_points('motion_last_minute')))
+    #print(list(result_adv.get_points('motion_since_last_adv'))[0])
+    #print(list(result_now.get_points('current_motion'))[0])
+    #print()
 
-for min_id, min_item in enumerate(list_min):
-    formatStr = "{0:." + str(2) + "f}"
-    percent = formatStr.format(100*(min_id/float(len(list_min))))
-    filledlength = int(round(100*min_id/float(len(list_min))))
-    bar = '█' * filledlength + '-' * (100-filledlength)
-    sys.stdout.write('\r%s |%s| %s%s %s' % ("Progress:", bar, percent, '%', 'Complete'))
+
+
+    list_min = list(result_min.get_points('motion_last_minute'))
+    list_adv = list(result_adv.get_points('motion_since_last_adv'))
+    list_now = list(result_now.get_points('current_motion'))
+
+    # print(list_min)
+    # print(list_adv)
+    # print(list_now)
+    # exit()
+
+    numerrors = 0
+
+    for min_id, min_item in enumerate(list_min):
+        formatStr = "{0:." + str(2) + "f}"
+        percent = formatStr.format(100*(min_id/float(len(list_min))))
+        filledlength = int(round(100*min_id/float(len(list_min))))
+        bar = '█' * filledlength + '-' * (100-filledlength)
+        sys.stdout.write('\r%s |%s| %s%s %s' % ("Progress:", bar, percent, '%', 'Complete'))
+        sys.stdout.flush()
+        adv_savId = -1
+        now_savId = -1
+
+        # print(json.loads(list_min[0]))
+        # exit()
+
+        # d = {'param' : min_item['time']}
+        # result_adv = client.query("select value from motion_since_last_adv where device_id='c098e59000b4' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') and time=\'" + str(min_item['time']) + "\'")
+        # val_adv = int(list(result_adv.get_points('motion_since_last_adv'))[0]['value'])
+        # #print(val_adv)
+        # #exit()
+
+        # result_now = client.query("select value from current_motion where device_id='c098e59000b4' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') and time=\'" + str(min_item['time']) + "\'")
+        # # list_now = list(result_now.get_points('current_motion'))
+        # # print(list_now)
+        # # exit()
+        # val_now = int(list(result_now.get_points('current_motion'))[0]['value'])
+
+        # print(list_min[0])
+        # print(int(next(item for item in list_adv if item['time'] == min_item['time'])['value']))
+        # exit()
+
+
+        # for adv_id, adv_item in enumerate(list_adv):
+        #     if min_item['device_id'] == adv_item['device_id'] and min_item['time'] == adv_item['time']:
+        #         adv_savId = adv_id
+        #         break
+
+        # for now_id, now_item in enumerate(list_now):
+        #     if min_item['device_id'] == now_item['device_id'] and min_item['time'] == now_item['time']:
+        #         now_savId = now_id
+        #         break
+
+        adv_savId = binsearch(list_adv, min_item['time'])
+        now_savId = binsearch(list_now, min_item['time'])
+
+        if(adv_savId == -1):
+            numerrors = numerrors + 1
+            print("Error: since last adv data not found")
+            continue
+
+        if(now_savId == -1):
+            numerrors = numerrors + 1
+            print("Error: current data not found")
+            continue
+
+        # print(int(list_now[now_savId]['value']))
+        # if(list_now[now_savId]['value'] == True):
+        #     print("Yes")
+        #     exit()
+
+        
+        try:
+            fout.write(str(min_item['device_id']) + "," + str(min_item['gateway_id'].replace(":","")) + "," + str(int(list_now[now_savId]['value'])) + "," + str(int(list_adv[adv_savId]['value'])) + "," + str(int(min_item['value'])) + "," + str(min_item['time'].split("T")[0]) + " " + str(min_item['time'].split("T")[1].split(".")[0]) + '\n')
+            #fout.write(str(min_item['device_id']) + "," + str(min_item['gateway_id'].replace(":","")) + "," + str(int(next(item for item in list_now if item['time'] == min_item['time'])['value'])) + "," + str(int(next(item for item in list_adv if item['time'] == min_item['time'])['value'])) + "," + str(int(min_item['value'])) + "," + str(min_item['time'].split("T")[0]) + " " + str(min_item['time'].split("T")[1].split(".")[0]) + '\n')
+            #fout.write(str(min_item['device_id']) + "," + str(min_item['gateway_id'].replace(":","")) + "," + str(val_adv) + "," + str(val_now) + "," + str(int(min_item['value'])) + "," + str(min_item['time'].split("T")[0]) + " " + str(min_item['time'].split("T")[1].split(".")[0]) + '\n')
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            print("Couldnt find value")
+            numerrors = numerrors + 1
+
+    sys.stdout.write('\n')
     sys.stdout.flush()
-    adv_savId = -1
-    now_savId = -1
+    errct.append(numerrors)
 
-    # print(json.loads(list_min[0]))
-    # exit()
-
-    # d = {'param' : min_item['time']}
-    # result_adv = client.query("select value from motion_since_last_adv where device_id='c098e59000b4' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') and time=\'" + str(min_item['time']) + "\'")
-    # val_adv = int(list(result_adv.get_points('motion_since_last_adv'))[0]['value'])
-    # #print(val_adv)
-    # #exit()
-
-    # result_now = client.query("select value from current_motion where device_id='c098e59000b4' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') and time=\'" + str(min_item['time']) + "\'")
-    # # list_now = list(result_now.get_points('current_motion'))
-    # # print(list_now)
-    # # exit()
-    # val_now = int(list(result_now.get_points('current_motion'))[0]['value'])
-
-    # print(list_min[0])
-    # print(int(next(item for item in list_adv if item['time'] == min_item['time'])['value']))
-    # exit()
-
-
-    # for adv_id, adv_item in enumerate(list_adv):
-    #     if min_item['device_id'] == adv_item['device_id'] and min_item['time'] == adv_item['time']:
-    #         adv_savId = adv_id
-    #         break
-
-    # for now_id, now_item in enumerate(list_now):
-    #     if min_item['device_id'] == now_item['device_id'] and min_item['time'] == now_item['time']:
-    #         now_savId = now_id
-    #         break
-
-    adv_savId = binsearch(list_adv, min_item['time'])
-    now_savId = binsearch(list_now, min_item['time'])
-
-    if(adv_savId == -1):
-        print("Error: since last adv data not found")
-        continue
-
-    if(now_savId == -1):
-        print("Error: current data not found")
-        continue
-
-    # print(int(list_now[now_savId]['value']))
-    # if(list_now[now_savId]['value'] == True):
-    #     print("Yes")
-    #     exit()
-
-    
-    try:
-        fout.write(str(min_item['device_id']) + "," + str(min_item['gateway_id'].replace(":","")) + "," + str(int(list_now[now_savId]['value'])) + "," + str(int(list_adv[adv_savId]['value'])) + "," + str(int(min_item['value'])) + "," + str(min_item['time'].split("T")[0]) + " " + str(min_item['time'].split("T")[1].split(".")[0]) + '\n')
-        #fout.write(str(min_item['device_id']) + "," + str(min_item['gateway_id'].replace(":","")) + "," + str(int(next(item for item in list_now if item['time'] == min_item['time'])['value'])) + "," + str(int(next(item for item in list_adv if item['time'] == min_item['time'])['value'])) + "," + str(int(min_item['value'])) + "," + str(min_item['time'].split("T")[0]) + " " + str(min_item['time'].split("T")[1].split(".")[0]) + '\n')
-        #fout.write(str(min_item['device_id']) + "," + str(min_item['gateway_id'].replace(":","")) + "," + str(val_adv) + "," + str(val_now) + "," + str(int(min_item['value'])) + "," + str(min_item['time'].split("T")[0]) + " " + str(min_item['time'].split("T")[1].split(".")[0]) + '\n')
-    except (KeyboardInterrupt, SystemExit):
-        raise
-    except:
-        print("Couldnt find value")
-
-sys.stdout.write('\n')
-sys.stdout.flush()
+print("\nNumber of unfound fields per device:")
+for devCt, devItem in enumerate(devices):
+    print(str(devCt) + ". " + str(devItem) + ": " + str(errct[devCt]))
 
 
 
