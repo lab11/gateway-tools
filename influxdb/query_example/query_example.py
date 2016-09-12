@@ -5,6 +5,25 @@ import os
 import bisect
 import math
 from datetime import datetime
+import re
+
+def printTime(time):
+    time = str(time)
+    timelist = time.replace(':','.').split('.')
+
+    #sys.stdout.write('\r')
+
+    if(int(timelist[0]) > 0):
+        sys.stdout.write('%s h, ' % (timelist[0]))
+    if(int(timelist[1]) > 0):
+        sys.stdout.write('%s m, ' % (timelist[1]))
+    if(int(timelist[2]) > 0):
+        sys.stdout.write('%s s, ' % (timelist[2]))
+    if(int(timelist[3]) > 0):
+        sys.stdout.write('%s ms' % (str(round(int(timelist[3])/1000))))
+
+    sys.stdout.write('\n')
+    sys.stdout.flush()
 
 def binsearch(a, x):
     x_day = x.split("T")[0]
@@ -74,12 +93,16 @@ with open('influxdb.conf', 'r') as f:
     config_str = '[global]\n' + f.read()
 config.read_string(config_str)
 
-devices = ['c098e59000b4', 'c098e59000b3']
+devices = ['c098e59000b4', 'c098e59000b3', 'c098e59000b7', 'c098e59000b0', 'c098e59000b8', 'c098e59000af', 'c098e59000b2', 'c098e59000b5']
 errct = []
 
 print("Starting process at " + str(datetime.now()))
 print("Connecting to influxDB")
 print()
+
+startTime = datetime.now()
+actStartTime = startTime
+
 # print("Connecting to influxDB:\n\thost=" + config['global']['host'] +
 #         "\n\tport=" + config['global']['port'] + 
 #         "\n\tusername=" + config['global']['username'] +
@@ -101,15 +124,32 @@ client = InfluxDBClient(host=config['global']['host'],
 #result = client.query("select value from channel_11 where receiver='scanner154-uart' and device_id='scanner_1' and time>'2016-08-08T05:07:37.59Z' and time<'2016-08-08T05:08:00.00Z'")
 #result = client.query("select * from motion_last_minute where device_id='c098e59000b4' or device_id='c098e59000b3' or device_id='c098e59000b7' or device_id='c098e59000b0' or device_id='c098e59000b8' or device_id='c098e59000af' or device_id='c098e59000b2' or device_id='c098e59000b5'")
 
-rowlimit = 1000
+#rowlimit = 100000000
+rowlimit = 10000
 
-fout = open('blink_b4.csv', 'w')
 
 for devItem in devices:
 
+    print()
+    print("Starting " + str(devItem))
+    fout = open('blink_' + str(devItem) + '.csv', 'w')
+    #printTime(datetime.now() - startTime)
+
+    sys.stdout.write("\rQuerying min data")
     result_min = client.query("select * from motion_last_minute where device_id=\'" + devItem + "\' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit " + str(rowlimit))
+    sys.stdout.write(" - ")
+    printTime(datetime.now() - startTime)
+    startTime = datetime.now()
+    sys.stdout.write("\rQuerying adv data")
     result_adv = client.query("select * from motion_since_last_adv where device_id=\'" + devItem + "\' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit " + str(rowlimit))
+    sys.stdout.write(" - ")
+    printTime(datetime.now() - startTime)
+    startTime = datetime.now()
+    sys.stdout.write("\rQuerying now data")
     result_now = client.query("select * from current_motion where device_id=\'" + devItem + "\' and (gateway_id='c0:98:e5:c0:00:25' or gateway_id='c0:98:e5:c0:00:26' or gateway_id='c0:98:e5:c0:00:03') order by time asc limit " + str(rowlimit))
+    sys.stdout.write(" - ")
+    printTime(datetime.now() - startTime)
+    startTime = datetime.now()
     #print()
     #print(result_min)
     #print(result.get_points)
@@ -133,8 +173,8 @@ for devItem in devices:
 
     for min_id, min_item in enumerate(list_min):
         formatStr = "{0:." + str(2) + "f}"
-        percent = formatStr.format(100*(min_id/float(len(list_min))))
-        filledlength = int(round(100*min_id/float(len(list_min))))
+        percent = formatStr.format(100*((min_id+1)/float(len(list_min))))
+        filledlength = int(round(100*(min_id+1)/float(len(list_min))))
         bar = '█' * filledlength + '-' * (100-filledlength)
         sys.stdout.write('\r%s |%s| %s%s %s' % ("Progress:", bar, percent, '%', 'Complete'))
         sys.stdout.flush()
@@ -204,9 +244,15 @@ for devItem in devices:
     sys.stdout.flush()
     errct.append(numerrors)
 
+    fout.close()
+
 print("\nNumber of unfound fields per device:")
 for devCt, devItem in enumerate(devices):
     print(str(devCt) + ". " + str(devItem) + ": " + str(errct[devCt]))
+
+print()
+print("Total Time:")
+printTime(datetime.now() - actStartTime)
 
 
 
