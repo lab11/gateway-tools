@@ -98,7 +98,6 @@ errct = []
 
 print("Starting process at " + str(datetime.now()))
 print("Connecting to influxDB")
-print()
 
 startTime = datetime.now()
 actStartTime = startTime
@@ -124,8 +123,10 @@ client = InfluxDBClient(host=config['global']['host'],
 #result = client.query("select value from channel_11 where receiver='scanner154-uart' and device_id='scanner_1' and time>'2016-08-08T05:07:37.59Z' and time<'2016-08-08T05:08:00.00Z'")
 #result = client.query("select * from motion_last_minute where device_id='c098e59000b4' or device_id='c098e59000b3' or device_id='c098e59000b7' or device_id='c098e59000b0' or device_id='c098e59000b8' or device_id='c098e59000af' or device_id='c098e59000b2' or device_id='c098e59000b5'")
 
-#rowlimit = 100000000
-rowlimit = 10000
+rowlimit = 100000000
+if len(sys.argv) == 2:
+    rowlimit = int(sys.argv[1])
+    print("Limiting to " + str(rowlimit) + " rows")
 
 
 for devItem in devices:
