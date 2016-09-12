@@ -19,8 +19,7 @@ def printTime(time):
         sys.stdout.write('%s m, ' % (timelist[1]))
     if(int(timelist[2]) > 0):
         sys.stdout.write('%s s, ' % (timelist[2]))
-    if(int(timelist[3]) > 0):
-        sys.stdout.write('%s ms' % (str(round(int(timelist[3])/1000))))
+    sys.stdout.write('%s ms - %s' % (str(round(int(timelist[3])/1000)), str(datetime.now())))
 
     sys.stdout.write('\n')
     sys.stdout.flush()
@@ -132,7 +131,7 @@ if len(sys.argv) == 2:
 for devItem in devices:
 
     print()
-    print("Starting " + str(devItem))
+    print("Starting " + str(devItem) + " at " + str(datetime.now()))
     fout = open('blink_' + str(devItem) + '.csv', 'w')
     #printTime(datetime.now() - startTime)
 
