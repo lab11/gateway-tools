@@ -1,0 +1,12 @@
+[Unit]
+Description=Adds metadata for influx
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/gateway-tools/influxdb/influxdb-postgres-add-meta/
+ExecStart=/opt/gateway-tools/influxdb/influxdb-postgres-add-meta/influxdb-postgres-add-meta
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

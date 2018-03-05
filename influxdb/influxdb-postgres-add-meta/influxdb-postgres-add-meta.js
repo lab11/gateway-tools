@@ -32,7 +32,7 @@ async function start() {
 		}
 	} catch (e) {
 		console.log(e)
-		console.log('Could not find /etc/swarm-gateway/influxdb-lab11-meta.conf or influxdb not configured.');
+		console.log('Could not find /etc/swarm-gateway/influxdb-postgres-meta.conf or influxdb not configured.');
 		process.exit(1);
 	}
 
