@@ -4,6 +4,7 @@ var url     = require('url');
 var fs      = require('fs');
 
 var ini     = require('ini');
+var request = require('request');
 
 var express           = require('express');
 var expressBodyParser = require('body-parser')
@@ -50,10 +51,10 @@ async function start() {
 
 	async function get_device (device_id) {
 		const res = await db.query('SELECT * FROM devices WHERE sensorid=$1::text LIMIT 1', [device_id]);
-		if (res) {
-			delete res.sensorid;
-			delete res.type;
-			return res;
+		if (res.rows.length > 0) {
+			delete res.rows[0].sensorid;
+			delete res.rows[0].type;
+			return res.rows[0];
 		}
 	}
 
@@ -84,7 +85,7 @@ async function start() {
 	_app.use(expressBodyParser.text({type: function () {return true;}}));
 
 	// Main path that intercepts the write to the influx database
-	_app.post('/swarmgateway/write', function (req, res) {
+	_app.post('/gateway/write', async function (req, res) {
 
 		var body = req.body;
 		var lines = body.split('\n');
@@ -109,7 +110,7 @@ async function start() {
 					var device_id = pieces[0].slice(device_id_index+10, end_index);
 
 					// Lookup if we know anything about that device
-					device = get_device(device_id);
+					device = await get_device(device_id);
 					if (device) {
 						// Add the meta data
 						var addon = '';
@@ -120,7 +121,7 @@ async function start() {
 						}
 
 						for (key in device) {
-							if (device[key].length > 0) {
+							if (device[key] && device[key].length > 0) {
 								addon += ','+key+'=' + sanitize_tag(device[key]);
 							}
 						}
@@ -143,7 +144,7 @@ async function start() {
 			var new_body = new_lines.join('\n');
 
 			// Get the URL to post to for the real influx db
-			var post_url = req.originalUrl.split('/swarmgateway')[1];
+			var post_url = req.originalUrl.split('/gateway')[1];
 			var post_base = url.format({
 				protocol: config.protocol,
 				hostname: config.host,
