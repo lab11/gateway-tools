@@ -25,8 +25,8 @@ async function start() {
 		    config.listen_port == undefined || config.listen_port == '' ||
 		    config.postgres_host == undefined || config.postgres_host == '' ||
 		    config.postgres_port == undefined || config.postgres_port == '' ||
-		    config.postgres_db == undefined || config.postgres_db == '') {
-		    config.postgres_user == undefined || config.postgres_user == '') {
+		    config.postgres_db == undefined || config.postgres_db == '' ||
+		    config.postgres_user == undefined || config.postgres_user == '' ||
 		    config.postgres_password == undefined || config.postgres_password == '') {
 			throw new Exception('no settings');
 		}
