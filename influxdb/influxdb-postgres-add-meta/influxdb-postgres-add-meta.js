@@ -58,27 +58,6 @@ async function start() {
 		}
 	}
 
- // // Populate the meta data to start
- // var _devices = {};
- // function update_local_meta () {
- // 	get_wiki_devices(config.wiki_username, config.wiki_password, config.wiki_url, function (err, devices) {
- // 		if (err) {
- // 			console.log('Error getting wiki device meta list.')
- // 			console.log(err)
- // 			return;
- // 		}
- // 		console.log('Updated device meta registry.');
- // 		_devices = devices;
- // 	});
- // }
- // update_local_meta();
-
- // // Now do that every 5 minutes so it stays current
- // setInterval(update_local_meta, 5 * 60 * 1000);
-
-
-
-
 	// And setup the HTTP server
 	var _app = express();
 	// _app.use(expressBodyParser.text());
@@ -175,70 +154,6 @@ async function start() {
 		console.log('Listening for incoming influxdb data to add meta data to.');
 	});
 
-
-
-
-
-
 }
 
 start();
-
-// function get_wiki_devices (username, password, base_url, cb) {
-// 	devices = {};
-//
-// 	// Get the wiki page
-// 	var url = base_url + '/doku.php?id=priv:equipment'
-// 	var data = {
-// 		do: 'login',
-// 		u: username,
-// 		p: password,
-// 		r: '1'
-// 	}
-//
-// 	request.post({url:url, form:data, followAllRedirects: true, jar: true}, function (err, httpResponse, body) {
-// 		if (err) {
-// 			cb(err);
-// 			return;
-// 		}
-//
-// 		var $ = cheerio.load(body);
-//
-// 		var tables = $('table');
-// 		for (var i=0; i<tables.length; i++) {
-// 			var table = tables[i];
-// 			var ths = $(table).find('th');
-//
-// 			if (ths.length === 8 &&
-// 				$(ths[0]).text().trim() === '#' &&
-// 				$(ths[1]).text().trim() === 'Device Type' &&
-// 				$(ths[2]).text().trim() === 'Device Hostname' &&
-// 				$(ths[3]).text().trim() === 'IP Address' &&
-// 				$(ths[4]).text().trim() === 'Device ID' &&
-// 				$(ths[5]).text().trim() === 'Location' &&
-// 				$(ths[6]).text().trim() === 'Description' &&
-// 				$(ths[7]).text().trim() === 'Notes') {
-//
-// 				var rows = $(table).find('tr');
-// 				for (var k=0; k<rows.length; k++) {
-// 					var row = rows[k];
-// 					var cols = $(row).find('td');
-//
-// 					if (cols.length == 8) {
-// 						var deviceid = $(cols[4]).text().trim().toLowerCase().replace(/:/g, '');
-// 						var node = {
-// 							location:    $(cols[5]).text().trim(),
-// 							description: $(cols[6]).text().trim(),
-// 							notes:       $(cols[7]).text().trim()
-// 						};
-//
-// 						devices[deviceid] = node;
-// 					}
-// 				}
-// 			}
-// 		}
-// 		cb(null, devices);
-// 	});
-// }
-//
-// Read
