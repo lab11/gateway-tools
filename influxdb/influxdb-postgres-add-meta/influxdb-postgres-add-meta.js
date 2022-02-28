@@ -61,7 +61,7 @@ async function start() {
 	// And setup the HTTP server
 	var _app = express();
 	// _app.use(expressBodyParser.text());
-	_app.use(expressBodyParser.text({type: function () {return true;}}));
+	_app.use(expressBodyParser.text({type: function () {return true;}, limit: 500000}));
 
 	// Main path that intercepts the write to the influx database
 	_app.post('/gateway/write', async function (req, res) {
@@ -142,8 +142,13 @@ async function start() {
 			// Now make the request to the actual database and return whatever
 			// it returns
 			request(request_options, function (err, response, body) {
-				res.status(response.statusCode);
-				res.send(body);
+				if (err) {
+					console.log(err);
+					res.send('');
+				} else {
+					res.status(response.statusCode);
+					res.send(body);
+				}
 			});
 		} else {
 			res.send('');
