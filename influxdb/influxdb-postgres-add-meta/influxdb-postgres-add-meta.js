@@ -86,6 +86,10 @@ async function start() {
 				var device_id_index = pieces[0].indexOf('device_id');
 				if (device_id_index > -1) {
 					var end_index = pieces[0].indexOf(',', device_id_index);
+					if (end_index == -1) {
+						// device_id was the last tag, so use the length of pieces[0]
+						end_index = pieces[0].length;
+					}
 					var device_id = pieces[0].slice(device_id_index+10, end_index);
 
 					// Lookup if we know anything about that device
